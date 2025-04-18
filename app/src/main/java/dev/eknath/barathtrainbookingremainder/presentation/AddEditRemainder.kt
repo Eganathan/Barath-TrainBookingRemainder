@@ -1,0 +1,161 @@
+package dev.eknath.barathtrainbookingremainder.presentation
+
+import android.app.DatePickerDialog
+import android.widget.DatePicker
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import dev.eknath.barathtrainbookingremainder.data.Reminder
+import java.text.SimpleDateFormat
+import java.util.*
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddEditReminderScreen(
+    reminder: Reminder? = null,
+    onSave: (Reminder) -> Unit,
+    onCancel: () -> Unit
+) {
+    val context = LocalContext.current
+    val isEditing = reminder != null
+    
+    var trainNumber by remember { mutableStateOf(reminder?.trainNumber ?: "") }
+    var fromStation by remember { mutableStateOf(reminder?.fromStation ?: "") }
+    var toStation by remember { mutableStateOf(reminder?.toStation ?: "") }
+    var departureDate by remember { mutableStateOf(reminder?.departureDate ?: Date()) }
+    var departureTime by remember { mutableStateOf(reminder?.departureTime ?: "08:00 AM") }
+    var notes by remember { mutableStateOf(reminder?.notes ?: "") }
+    var isAlarmSet by remember { mutableStateOf(reminder?.isAlarmSet ?: false) }
+    
+    val dateFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+    val formattedDate = dateFormatter.format(departureDate)
+    
+    val datePickerDialog = DatePickerDialog(
+        context,
+        { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
+            val calendar = Calendar.getInstance()
+            calendar.set(year, month, dayOfMonth)
+            departureDate = calendar.time
+        },
+        Calendar.getInstance().get(Calendar.YEAR),
+        Calendar.getInstance().get(Calendar.MONTH),
+        Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
+    )
+    
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(if (isEditing) "Edit Reminder" else "Add Reminder") },
+                navigationIcon = {
+                    IconButton(onClick = onCancel) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            OutlinedTextField(
+                value = trainNumber,
+                onValueChange = { trainNumber = it },
+                label = { Text("Train Number") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            OutlinedTextField(
+                value = fromStation,
+                onValueChange = { fromStation = it },
+                label = { Text("From Station") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            OutlinedTextField(
+                value = toStation,
+                onValueChange = { toStation = it },
+                label = { Text("To Station") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            // Date picker field
+            OutlinedTextField(
+                value = formattedDate,
+                onValueChange = {},
+                label = { Text("Departure Date") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { datePickerDialog.show() },
+                readOnly = true,
+                trailingIcon = {
+                    Icon(Icons.Default.DateRange, contentDescription = "Select Date")
+                }
+            )
+            
+            OutlinedTextField(
+                value = departureTime,
+                onValueChange = { departureTime = it },
+                label = { Text("Departure Time (e.g., 08:30 AM)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            OutlinedTextField(
+                value = notes,
+                onValueChange = { notes = it },
+                label = { Text("Notes (Optional)") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+            )
+            
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Set Reminder Alarm")
+                Spacer(modifier = Modifier.width(8.dp))
+                Switch(
+                    checked = isAlarmSet,
+                    onCheckedChange = { isAlarmSet = it }
+                )
+            }
+            
+            Spacer(modifier = Modifier.weight(1f))
+            
+            Button(
+                onClick = {
+                    onSave(
+                        Reminder(
+                            id = reminder?.id ?: 0,
+                            trainNumber = trainNumber,
+                            fromStation = fromStation,
+                            toStation = toStation,
+                            departureDate = departureDate,
+                            departureTime = departureTime,
+                            notes = notes,
+                            isAlarmSet = isAlarmSet
+                        )
+                    )
+                },
+                enabled = trainNumber.isNotBlank() && fromStation.isNotBlank() && toStation.isNotBlank(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+            ) {
+                Text(if (isEditing) "Update" else "Save")
+            }
+        }
+    }
+}
