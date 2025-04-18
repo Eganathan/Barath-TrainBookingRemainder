@@ -4,11 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
@@ -18,6 +16,8 @@ import dev.eknath.barathtrainbookingremainder.presentation.AddEditReminderScreen
 import dev.eknath.barathtrainbookingremainder.presentation.ReminderDetailsScreen
 import dev.eknath.barathtrainbookingremainder.ui.theme.BarathTrainBookingRemainderTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.eknath.barathtrainbookingremainder.presentation.BottomNavBar
+import dev.eknath.barathtrainbookingremainder.presentation.CalendarScreen
 import dev.eknath.barathtrainbookingremainder.presentation.ReminderViewModel
 
 class MainActivity : ComponentActivity() {
@@ -28,8 +28,12 @@ class MainActivity : ComponentActivity() {
             BarathTrainBookingRemainderTheme {
                 val navController = rememberNavController()
                 val reminderViewModel: ReminderViewModel = viewModel()
-                
-                Scaffold { innerPadding ->
+
+                Scaffold (
+                    bottomBar = {
+                        BottomNavBar(navController = navController)
+                    }
+                ){ innerPadding ->
                     NavHost(
                         navController = navController,
                         startDestination = "home",
@@ -61,7 +65,9 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("edit/{reminderId}") { backStackEntry ->
-                            val reminderId = backStackEntry.arguments?.getString("reminderId")?.toLongOrNull() ?: return@composable
+                            val reminderId =
+                                backStackEntry.arguments?.getString("reminderId")?.toLongOrNull()
+                                    ?: return@composable
                             val reminder = reminderViewModel.getReminder(reminderId)
                             AddEditReminderScreen(
                                 reminder = reminder,
@@ -75,11 +81,13 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("details/{reminderId}") { backStackEntry ->
-                            val reminderId = backStackEntry.arguments?.getString("reminderId")?.toLongOrNull() ?: return@composable
+                            val reminderId =
+                                backStackEntry.arguments?.getString("reminderId")?.toLongOrNull()
+                                    ?: return@composable
                             val reminder = reminderViewModel.getReminder(reminderId)
                             ReminderDetailsScreen(
                                 reminder = reminder,
-                                onEditClick = { 
+                                onEditClick = {
                                     navController.navigate("edit/$reminderId")
                                 },
                                 onBackClick = {
@@ -87,6 +95,13 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
+
+                        composable("calendar") {
+                            CalendarScreen(
+                                navigateBack = { navController.popBackStack() }
+                            )
+                        }
+
                     }
                 }
             }
