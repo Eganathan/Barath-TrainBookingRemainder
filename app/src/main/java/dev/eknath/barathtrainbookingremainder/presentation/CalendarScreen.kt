@@ -8,6 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.maxkeppeker.sheets.core.models.base.rememberUseCaseState
 import com.maxkeppeler.sheets.calendar.CalendarDialog
 import com.maxkeppeler.sheets.calendar.models.CalendarConfig
@@ -18,13 +19,14 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(
+    navController: NavController,
     navigateBack: () -> Unit
 ) {
     var selectedDate by remember { mutableStateOf(LocalDate.now().plusDays(61)) }
     var bookableDate by remember { mutableStateOf(LocalDate.now()) }
-    
+
     val calendarState = rememberUseCaseState()
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -37,7 +39,7 @@ fun CalendarScreen(
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 24.dp)
         )
-        
+
         // Selected date display
         Card(
             modifier = Modifier
@@ -57,9 +59,9 @@ fun CalendarScreen(
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Bookable date display
         Card(
             modifier = Modifier
@@ -81,17 +83,34 @@ fun CalendarScreen(
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         Button(
             onClick = { calendarState.show() },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Select Different Date")
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = {
+                // Navigate to reminder creation screen with the selected date as parameter
+                navController.navigate(
+                    "add_reminder?date=${selectedDate}&bookableDate=${bookableDate}"
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary
+            )
+        ) {
+            Text("Create Reminder for Selected Date")
+        }
     }
-    
+
     // Calendar Dialog
     CalendarDialog(
         state = calendarState,

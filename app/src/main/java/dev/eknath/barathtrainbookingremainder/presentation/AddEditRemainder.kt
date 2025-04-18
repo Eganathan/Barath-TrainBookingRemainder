@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import dev.eknath.barathtrainbookingremainder.data.Reminder
+import org.threeten.bp.LocalDate
+import org.threeten.bp.format.DateTimeFormatter
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -21,16 +23,30 @@ import java.util.*
 @Composable
 fun AddEditReminderScreen(
     reminder: Reminder? = null,
+    preselectedDate: LocalDate? = null,
     onSave: (Reminder) -> Unit,
     onCancel: () -> Unit
 ) {
     val context = LocalContext.current
     val isEditing = reminder != null
     
+    // Convert preselected LocalDate to Date if provided
+    val initialDate = if (preselectedDate != null) {
+        val calendar = Calendar.getInstance()
+        calendar.set(
+            preselectedDate.year,
+            preselectedDate.monthValue - 1,
+            preselectedDate.dayOfMonth
+        )
+        calendar.time
+    } else {
+        reminder?.departureDate ?: Date()
+    }
+    
     var trainNumber by remember { mutableStateOf(reminder?.trainNumber ?: "") }
     var fromStation by remember { mutableStateOf(reminder?.fromStation ?: "") }
     var toStation by remember { mutableStateOf(reminder?.toStation ?: "") }
-    var departureDate by remember { mutableStateOf(reminder?.departureDate ?: Date()) }
+    var departureDate by remember { mutableStateOf(initialDate) }
     var departureTime by remember { mutableStateOf(reminder?.departureTime ?: "08:00 AM") }
     var notes by remember { mutableStateOf(reminder?.notes ?: "") }
     var isAlarmSet by remember { mutableStateOf(reminder?.isAlarmSet ?: false) }

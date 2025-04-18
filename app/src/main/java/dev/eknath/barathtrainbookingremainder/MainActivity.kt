@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
@@ -16,24 +15,29 @@ import dev.eknath.barathtrainbookingremainder.presentation.AddEditReminderScreen
 import dev.eknath.barathtrainbookingremainder.presentation.ReminderDetailsScreen
 import dev.eknath.barathtrainbookingremainder.ui.theme.BarathTrainBookingRemainderTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.jakewharton.threetenabp.AndroidThreeTen
 import dev.eknath.barathtrainbookingremainder.presentation.BottomNavBar
 import dev.eknath.barathtrainbookingremainder.presentation.CalendarScreen
 import dev.eknath.barathtrainbookingremainder.presentation.ReminderViewModel
 
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AndroidThreeTen.init(this)
         enableEdgeToEdge()
         setContent {
             BarathTrainBookingRemainderTheme {
                 val navController = rememberNavController()
                 val reminderViewModel: ReminderViewModel = viewModel()
 
-                Scaffold (
+                Scaffold(
                     bottomBar = {
                         BottomNavBar(navController = navController)
                     }
-                ){ innerPadding ->
+                ) { innerPadding ->
                     NavHost(
                         navController = navController,
                         startDestination = "home",
@@ -98,13 +102,52 @@ class MainActivity : ComponentActivity() {
 
                         composable("calendar") {
                             CalendarScreen(
+                                navController = navController,
                                 navigateBack = { navController.popBackStack() }
                             )
                         }
 
+                        composable(
+                            route = "add_reminder?date={date}&bookableDate={bookableDate}",
+                            arguments = listOf(
+                                navArgument("date") { 
+                                    type = NavType.StringType 
+                                    nullable = true
+                                    defaultValue = null
+                                },
+                                navArgument("bookableDate") { 
+                                    type = NavType.StringType 
+                                    nullable = true
+                                    defaultValue = null
+                                }
+                            )
+                        ) { backStackEntry ->
+                            val dateString = backStackEntry.arguments?.getString("date")
+                            val bookableDateString = backStackEntry.arguments?.getString("bookableDate")
+
+                            val selectedDate = parseLocalDate(dateString, 60)
+                            val bookableDate = parseLocalDate(bookableDateString, 90)
+
+                            AddEditReminderScreen(
+                                preselectedDate = selectedDate,
+                                onSave = { newReminder ->
+                                    reminderViewModel.addReminder(newReminder)
+                                    navController.navigateUp()
+                                },
+                                onCancel = { navController.navigateUp() }
+                            )
+                        }
                     }
                 }
             }
         }
     }
+}
+
+private fun parseLocalDate(dateString: String?, defaultDaysToAdd: Long): org.threeten.bp.LocalDate {
+    if (dateString.isNullOrEmpty()) {
+        return org.threeten.bp.LocalDate.now().plusDays(defaultDaysToAdd)
+    }
+
+    return org.threeten.bp.LocalDate.parse(dateString)
 }
