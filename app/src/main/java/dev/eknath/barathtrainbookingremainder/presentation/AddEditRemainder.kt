@@ -4,6 +4,8 @@ import android.app.DatePickerDialog
 import android.widget.DatePicker
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
@@ -15,7 +17,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import dev.eknath.barathtrainbookingremainder.data.Reminder
 import org.threeten.bp.LocalDate
-import org.threeten.bp.format.DateTimeFormatter
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -29,7 +30,7 @@ fun AddEditReminderScreen(
 ) {
     val context = LocalContext.current
     val isEditing = reminder != null
-    
+
     // Convert preselected LocalDate to Date if provided
     val initialDate = if (preselectedDate != null) {
         val calendar = Calendar.getInstance()
@@ -42,19 +43,29 @@ fun AddEditReminderScreen(
     } else {
         reminder?.departureDate ?: Date()
     }
-    
+
+    // Calculate bookable date (90 days before departure or custom value)
+    val initialBookableDate = reminder?.bookableDate ?: run {
+        val bookableCal = Calendar.getInstance()
+        bookableCal.time = initialDate
+        bookableCal.add(Calendar.DAY_OF_YEAR, -90) // Default 90 days before
+        bookableCal.time
+    }
+
     var trainNumber by remember { mutableStateOf(reminder?.trainNumber ?: "") }
     var fromStation by remember { mutableStateOf(reminder?.fromStation ?: "") }
     var toStation by remember { mutableStateOf(reminder?.toStation ?: "") }
     var departureDate by remember { mutableStateOf(initialDate) }
+    var bookableDate by remember { mutableStateOf(initialBookableDate) }
     var departureTime by remember { mutableStateOf(reminder?.departureTime ?: "08:00 AM") }
     var notes by remember { mutableStateOf(reminder?.notes ?: "") }
     var isAlarmSet by remember { mutableStateOf(reminder?.isAlarmSet ?: false) }
-    
+
     val dateFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
     val formattedDate = dateFormatter.format(departureDate)
-    
-    val datePickerDialog = DatePickerDialog(
+    val formattedBookableDate = dateFormatter.format(bookableDate)
+
+    val departureDatePickerDialog = DatePickerDialog(
         context,
         { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
             val calendar = Calendar.getInstance()
@@ -65,7 +76,19 @@ fun AddEditReminderScreen(
         Calendar.getInstance().get(Calendar.MONTH),
         Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
     )
-    
+
+    val bookableDatePickerDialog = DatePickerDialog(
+        context,
+        { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
+            val calendar = Calendar.getInstance()
+            calendar.set(year, month, dayOfMonth)
+            bookableDate = calendar.time
+        },
+        Calendar.getInstance().get(Calendar.YEAR),
+        Calendar.getInstance().get(Calendar.MONTH),
+        Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -82,51 +105,59 @@ fun AddEditReminderScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             OutlinedTextField(
                 value = trainNumber,
                 onValueChange = { trainNumber = it },
-                label = { Text("Train Number") },
+                label = { Text("Train Name or Title") },
                 modifier = Modifier.fillMaxWidth()
             )
-            
-            OutlinedTextField(
-                value = fromStation,
-                onValueChange = { fromStation = it },
-                label = { Text("From Station") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            
-            OutlinedTextField(
-                value = toStation,
-                onValueChange = { toStation = it },
-                label = { Text("To Station") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            
-            // Date picker field
+
+            Text("Journey Details:", modifier = Modifier.offset(y = 10.dp))
+            Row(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = fromStation,
+                    onValueChange = { fromStation = it },
+                    label = { Text("From") },
+                    modifier = Modifier.weight(0.5f)
+                )
+
+                Spacer(modifier = Modifier.width(5.dp))
+
+                OutlinedTextField(
+                    value = toStation,
+                    onValueChange = { toStation = it },
+                    label = { Text("To") },
+                    modifier = Modifier.weight(0.5f)
+                )
+            }
+
+            // Departure date picker field
             OutlinedTextField(
                 value = formattedDate,
                 onValueChange = {},
                 label = { Text("Departure Date") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { datePickerDialog.show() },
+                    .clickable { departureDatePickerDialog.show() },
                 readOnly = true,
                 trailingIcon = {
                     Icon(Icons.Default.DateRange, contentDescription = "Select Date")
                 }
             )
-            
+
+            Text(text = "Bookable Date: " + formattedBookableDate + " at 08:30 AM")
+
             OutlinedTextField(
                 value = departureTime,
                 onValueChange = { departureTime = it },
                 label = { Text("Departure Time (e.g., 08:30 AM)") },
                 modifier = Modifier.fillMaxWidth()
             )
-            
+
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
@@ -135,7 +166,7 @@ fun AddEditReminderScreen(
                     .fillMaxWidth()
                     .height(100.dp)
             )
-            
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -147,9 +178,9 @@ fun AddEditReminderScreen(
                     onCheckedChange = { isAlarmSet = it }
                 )
             }
-            
+
             Spacer(modifier = Modifier.weight(1f))
-            
+
             Button(
                 onClick = {
                     onSave(
@@ -161,7 +192,8 @@ fun AddEditReminderScreen(
                             departureDate = departureDate,
                             departureTime = departureTime,
                             notes = notes,
-                            isAlarmSet = isAlarmSet
+                            isAlarmSet = isAlarmSet,
+                            bookableDate = bookableDate
                         )
                     )
                 },

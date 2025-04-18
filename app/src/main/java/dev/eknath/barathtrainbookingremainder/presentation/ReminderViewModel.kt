@@ -1,60 +1,65 @@
 package dev.eknath.barathtrainbookingremainder.presentation
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import dev.eknath.barathtrainbookingremainder.data.AppDatabase
 import dev.eknath.barathtrainbookingremainder.data.Reminder
-import java.util.Date
+import dev.eknath.barathtrainbookingremainder.data.ReminderRepository
+import dev.eknath.barathtrainbookingremainder.utils.AlarmScheduler
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-class ReminderViewModel : ViewModel() {
+class ReminderViewModel(application: Application) : AndroidViewModel(application) {
+    private val repository: ReminderRepository
+    private val alarmScheduler = AlarmScheduler(application)
 
-    private var _reminders = mutableStateListOf<Reminder>()
-    val reminders: List<Reminder> get() = _reminders
-
-    private var nextId = 1L
+    private val _reminders = MutableStateFlow<List<Reminder>>(emptyList())
+    val reminders: StateFlow<List<Reminder>> = _reminders.asStateFlow()
 
     init {
-        // Add some sample data
-        addReminder(
-            Reminder(
-                id = nextId++,
-                trainNumber = "12601",
-                fromStation = "Chennai Central",
-                toStation = "Bengaluru",
-                departureDate = Date(),
-                departureTime = "08:00 AM"
-            )
-        )
-        addReminder(
-            Reminder(
-                id = nextId++,
-                trainNumber = "12602",
-                fromStation = "Bengaluru",
-                toStation = "Chennai Central",
-                departureDate = Date(),
-                departureTime = "10:30 PM",
-                notes = "Return journey",
-                isAlarmSet = true
-            )
-        )
+        val reminderDao = AppDatabase.getDatabase(application).reminderDao()
+        repository = ReminderRepository(reminderDao)
+
+        viewModelScope.launch {
+            repository.allReminders.collect { remindersList ->
+                _reminders.value = remindersList
+            }
+        }
     }
 
     fun addReminder(reminder: Reminder) {
-        val newReminder = reminder.copy(id = nextId++)
-        _reminders.add(newReminder)
-    }
-
-    fun getReminder(id: Long): Reminder? {
-        return _reminders.find { it.id == id }
+        viewModelScope.launch {
+            val newId = repository.insertReminder(reminder)
+            if (reminder.isAlarmSet) {
+                // If the reminder needs an alarm, schedule it
+                alarmScheduler.scheduleReminder(reminder.copy(id = newId))
+            }
+        }
     }
 
     fun updateReminder(reminder: Reminder) {
-        val index = _reminders.indexOfFirst { it.id == reminder.id }
-        if (index != -1) {
-            _reminders[index] = reminder
+        viewModelScope.launch {
+            repository.updateReminder(reminder)
+            if (reminder.isAlarmSet) {
+                alarmScheduler.scheduleReminder(reminder)
+            } else {
+                alarmScheduler.cancelReminder(reminder.id)
+            }
         }
     }
 
     fun deleteReminder(id: Long) {
-        _reminders.removeIf { it.id == id }
+        viewModelScope.launch {
+            val reminder = getReminderById(id) ?: return@launch
+            repository.deleteReminder(reminder)
+            alarmScheduler.cancelReminder(reminder.id)
+        }
+    }
+
+    suspend fun getReminderById(id: Long): Reminder? {
+        return repository.getReminderById(id)
     }
 }
