@@ -7,6 +7,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.eknath.barathtrainbookingremainder.R
+import dev.eknath.barathtrainbookingremainder.utils.Constants
 
 data class BottomNavItem(
     val name: String,
@@ -16,19 +17,24 @@ data class BottomNavItem(
 
 @Composable
 fun BottomNavBar(navController: NavController) {
-    val navItems = listOf(
-        BottomNavItem(
-            name = "Home",
-            route = "home",
-            icon = R.drawable.ic_home
-        ),
+    val navItems = mutableListOf(
         BottomNavItem(
             name = "Calendar",
             route = "calendar",
             icon = R.drawable.ic_calendar
         )
-        // Add more navigation items as needed
     )
+
+    // Add debug option only in debug builds
+    if (Constants.DEBUG_MODE) {
+        navItems.add(
+            BottomNavItem(
+                name = "Debug",
+                route = "debug",
+                icon = R.drawable.ic_home
+            )
+        )
+    }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route

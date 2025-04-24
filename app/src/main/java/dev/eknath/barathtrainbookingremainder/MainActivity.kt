@@ -24,6 +24,7 @@ import dev.eknath.barathtrainbookingremainder.data.Reminder
 import dev.eknath.barathtrainbookingremainder.presentation.AddEditReminderScreen
 import dev.eknath.barathtrainbookingremainder.presentation.BottomNavBar
 import dev.eknath.barathtrainbookingremainder.presentation.CalendarScreen
+import dev.eknath.barathtrainbookingremainder.presentation.DebugScreen
 import dev.eknath.barathtrainbookingremainder.presentation.HomeScreen
 import dev.eknath.barathtrainbookingremainder.presentation.ReminderDetailsScreen
 import dev.eknath.barathtrainbookingremainder.presentation.ReminderViewModel
@@ -49,7 +50,7 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     NavHost(
                         navController = navController,
-                        startDestination = "home",
+                        startDestination = "add",
                         modifier = Modifier.padding(innerPadding)
                     ) {
                         composable("home") {
@@ -130,6 +131,10 @@ class MainActivity : ComponentActivity() {
                                 navController = navController,
                                 navigateBack = { navController.popBackStack() }
                             )
+                        }
+
+                        composable("debug") {
+                            DebugScreen(navController = navController)
                         }
 
                         composable(
