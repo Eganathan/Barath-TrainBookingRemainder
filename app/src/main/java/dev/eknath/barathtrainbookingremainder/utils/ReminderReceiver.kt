@@ -44,11 +44,19 @@ class ReminderReceiver : BroadcastReceiver() {
         
         // Build and show notification
         val isTest = intent.getBooleanExtra("IS_TEST", false)
-        val contentTitle = if (isTest) "Test Notification" else "Train Booking Available Soon!"
-        val contentText = if (isTest) 
-                            "This is a test notification for Train $trainNumber" 
-                          else 
-                            "Train $trainNumber from $fromStation to $toStation can be booked in 5 minutes"
+        val isAlarmTest = intent.getBooleanExtra("IS_ALARM_TEST", false)
+        
+        val contentTitle = when {
+            isAlarmTest -> "Test Alarm Triggered"
+            isTest -> "Test Notification"
+            else -> "Train Booking Available Soon!"
+        }
+        
+        val contentText = when {
+            isAlarmTest -> "Alarm test successful! Train $trainNumber would be bookable now."
+            isTest -> "This is a test notification for Train $trainNumber"
+            else -> "Train $trainNumber from $fromStation to $toStation can be booked in 5 minutes"
+        }
         
         val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)

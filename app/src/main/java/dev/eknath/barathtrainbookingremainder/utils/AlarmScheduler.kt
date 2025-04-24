@@ -194,4 +194,83 @@ class AlarmScheduler(private val context: Context) {
             Log.e(TAG, "Error scheduling test alarm", e)
         }
     }
+
+    /**
+     * Tests the alarm functionality by scheduling an alarm that will trigger
+     * after the specified delay in seconds
+     */
+    fun testAlarm(delaySeconds: Int = 15) {
+        Log.d(TAG, "Creating test alarm to trigger in $delaySeconds seconds")
+        
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.SECOND, delaySeconds)
+        
+        // Create a test reminder with future date
+        val testReminder = Reminder(
+            id = System.currentTimeMillis() + 1, // Ensure unique ID from testNotification
+            trainNumber = "ALARM-54321",
+            fromStation = "Alarm Origin",
+            toStation = "Alarm Destination",
+            departureDate = Date(),
+            departureTime = "09:30",
+            notes = "Test alarm functionality",
+            isAlarmSet = true,
+            bookableDate = calendar.time
+        )
+        
+        // Create intent for the alarm
+        val intent = Intent(context, ReminderReceiver::class.java).apply {
+            putExtra("REMINDER_ID", testReminder.id)
+            putExtra("TRAIN_NUMBER", testReminder.trainNumber)
+            putExtra("FROM_STATION", testReminder.fromStation)
+            putExtra("TO_STATION", testReminder.toStation)
+            putExtra("IS_TEST", true)
+            putExtra("IS_ALARM_TEST", true)
+        }
+        
+        val pendingIntentFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
+        
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            testReminder.id.toInt(),
+            intent,
+            pendingIntentFlags
+        )
+        
+        try {
+            // Schedule the alarm with the specified delay
+            val triggerTime = System.currentTimeMillis() + (delaySeconds * 1000L)
+            
+            Log.d(TAG, "Setting test alarm for: ${calendar.time}")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerTime,
+                        pendingIntent
+                    )
+                } else {
+                    alarmManager.set(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerTime,
+                        pendingIntent
+                    )
+                }
+            } else {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
+            }
+            
+            Log.d(TAG, "Test alarm scheduled successfully for ${delaySeconds}s from now")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error scheduling test alarm", e)
+        }
+    }
 }
