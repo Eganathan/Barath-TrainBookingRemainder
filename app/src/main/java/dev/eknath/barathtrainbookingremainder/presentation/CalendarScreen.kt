@@ -77,7 +77,7 @@ fun CalendarScreen(
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
-                    text = "${bookableDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))} at 08:30 AM",
+                    text = "${bookableDate.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))} at 08:00 AM",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )

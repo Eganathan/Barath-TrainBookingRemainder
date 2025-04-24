@@ -1,9 +1,13 @@
 package dev.eknath.barathtrainbookingremainder
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +41,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         AndroidThreeTen.init(this)
         enableEdgeToEdge()
+        
+        // Request notification permission for Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestNotificationPermission()
+        }
+        
         setContent {
             BarathTrainBookingRemainderTheme {
                 val navController = rememberNavController()
@@ -132,10 +142,9 @@ class MainActivity : ComponentActivity() {
                                 navigateBack = { navController.popBackStack() }
                             )
                         }
-
-                        composable("debug") {
-                            DebugScreen(navController = navController)
-                        }
+//                        composable("debug") {
+//                            DebugScreen(navController = navController)
+//                        }
 
                         composable(
                             route = "add_reminder?date={date}&bookableDate={bookableDate}",
@@ -175,6 +184,27 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+            }
+        }
+    }
+    
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == 
+                PackageManager.PERMISSION_GRANTED
+                
+            if (!hasPermission) {
+                val requestPermissionLauncher = registerForActivityResult(
+                    ActivityResultContracts.RequestPermission()
+                ) { isGranted ->
+                    if (isGranted) {
+                        android.util.Log.d("MainActivity", "Notification permission granted")
+                    } else {
+                        android.util.Log.d("MainActivity", "Notification permission denied")
+                    }
+                }
+                
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
     }

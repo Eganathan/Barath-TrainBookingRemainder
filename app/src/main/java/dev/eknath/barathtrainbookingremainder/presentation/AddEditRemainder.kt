@@ -149,7 +149,7 @@ fun AddEditReminderScreen(
                 }
             )
 
-            Text(text = "Bookable Date: " + formattedBookableDate + " at 08:30 AM")
+            Text(text = "Bookable Date: " + formattedBookableDate + " at 08:00 AM")
 
             OutlinedTextField(
                 value = departureTime,

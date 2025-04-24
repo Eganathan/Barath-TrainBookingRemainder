@@ -66,6 +66,33 @@ fun DebugScreen(navController: NavController) {
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "About Alarms & Notifications",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Text(
+                            text = "The train reminder system uses Android's AlarmManager to schedule alerts " +
+                                  "and displays them as high-priority notifications with alarm sound and vibration " +
+                                  "when it's time to book your train tickets.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
                 AlarmTestCard()
                 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -102,7 +129,8 @@ fun AlarmTestCard() {
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Schedule a test alarm to verify the alarm system is working properly",
+                text = "Schedule a test alarm to verify the alarm system is working properly. " +
+                      "When triggered, you'll receive a high-priority notification with alarm sound and vibration.",
                 style = MaterialTheme.typography.bodyMedium
             )
             
