@@ -19,22 +19,28 @@ data class BottomNavItem(
 fun BottomNavBar(navController: NavController) {
     val navItems = mutableListOf(
         BottomNavItem(
+            name = "Home",
+            route = "home",
+            icon = R.drawable.ic_home
+        ),
+        BottomNavItem(
             name = "Calendar",
             route = "calendar",
             icon = R.drawable.ic_calendar
         )
     )
 
-    // Add debug option only in debug builds
-    if (Constants.DEBUG_MODE) {
-        navItems.add(
-            BottomNavItem(
-                name = "Debug",
-                route = "debug",
-                icon = R.drawable.ic_home
-            )
-        )
-    }
+
+// Add debug option only in debug builds
+//    if (Constants.DEBUG_MODE) {
+//        navItems.add(
+//            BottomNavItem(
+//                name = "Debug",
+//                route = "debug",
+//                icon = R.drawable.ic_home
+//            )
+//        )
+//    }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
